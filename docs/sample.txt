@@ -1,0 +1,4 @@
+This repository contains a minimal Retrieval-Augmented Generation (RAG) starter.
+It demonstrates how to ingest documents, build a FAISS vector index with sentence-transformers embeddings, retrieve relevant chunks, and answer questions using either the OpenAI API or a local extractive fallback.
+Use the CLI or the FastAPI server to interact with your data.
+
