@@ -6,8 +6,6 @@ from pathlib import Path
 from typing import List, Tuple
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
-import numpy as np
-
 from .config import (
     DOCS_DIR,
     INDEX_PATH,

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable, List
+from typing import List
 
 import numpy as np
 from sentence_transformers import SentenceTransformer
