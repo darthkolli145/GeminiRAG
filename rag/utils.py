@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from typing import Iterable, List
+import re
 
 from pypdf import PdfReader
 
@@ -42,6 +43,20 @@ def chunk_text(text: str) -> List[str]:
             break
         start = max(end - CHUNK_OVERLAP_CHARS, 0)
     return chunks
+
+
+_SENTENCE_REGEX = re.compile(r"(?<=[.!?])\s+")
+
+
+def split_into_sentences(text: str, max_sentences: int | None = None) -> List[str]:
+    if not text:
+        return []
+    # Simple regex-based splitter; avoids heavy deps
+    sentences = re.split(r"(?<=[.!?])\s+", text.strip())
+    sentences = [s for s in sentences if s]
+    if max_sentences is not None and len(sentences) > max_sentences:
+        return sentences[: max_sentences]
+    return sentences
 
 
 def read_json(path: Path, default):

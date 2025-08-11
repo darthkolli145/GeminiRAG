@@ -155,7 +155,7 @@ class VectorStore:
             # sklearn backend
             if not VECTORS_PATH.exists():
                 raise FileNotFoundError("Vectors file missing. Re-ingest.")
-            store._vectors = np.load(str(VECTORS_PATH)).astype("float32")
+            store._vectors = np.load(str(VECTORS_PATH), mmap_mode="r").astype("float32", copy=False)
             if store._vectors.size > 0:
                 n_neighbors = min(10, store._vectors.shape[0])
                 store.nn.set_params(n_neighbors=n_neighbors)

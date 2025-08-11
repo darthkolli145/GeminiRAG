@@ -18,6 +18,7 @@ DEFAULT_EMBEDDING_MODEL = os.environ.get(
     "EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2"
 )
 EMBEDDING_BATCH_SIZE = int(os.environ.get("EMBEDDING_BATCH_SIZE", "32"))
+EMBEDDING_SHOW_PROGRESS = os.environ.get("EMBEDDING_SHOW_PROGRESS", "0") == "1"
 
 # Chunking
 CHUNK_SIZE_CHARS = int(os.environ.get("CHUNK_SIZE_CHARS", "800"))
@@ -41,4 +42,12 @@ OPENAI_BASE_URL = os.environ.get("OPENAI_BASE_URL")  # Optional for Azure/Proxie
 
 # Retrieval
 DEFAULT_TOP_K = int(os.environ.get("TOP_K", "4"))
+
+# Reranking
+RERANK_STRATEGY = os.environ.get("RERANK_STRATEGY", "maxsim")  # maxsim|none
+RERANK_CANDIDATE_MULTIPLIER = int(os.environ.get("RERANK_CANDIDATE_MULTIPLIER", "5"))
+
+# Ingestion parallelism/progress
+INGEST_MAX_WORKERS = int(os.environ.get("INGEST_MAX_WORKERS", "4"))
+INGEST_SHOW_PROGRESS = os.environ.get("INGEST_SHOW_PROGRESS", "1") == "1"
 
