@@ -49,6 +49,8 @@ Enable optional NLP pipeline during ingest:
 $env:NLP_ENABLE = "1"
 $env:NLP_SUMMARIZE = "1"        # lead-3 sentence heuristic
 $env:NLP_EXTRACT_KEYWORDS = "1"  # naive TF-IDF
+$env:NLP_KEYWORDS_BACKEND = "sklearn"
+$env:NLP_KEYWORDS_NGRAM_MAX = "2"
 ./.venv/Scripts/python.exe -m rag.ingest --path docs
 ```
 

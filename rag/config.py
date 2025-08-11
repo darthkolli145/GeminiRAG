@@ -62,4 +62,7 @@ NLP_SUMMARY_SENTENCES = int(os.environ.get("NLP_SUMMARY_SENTENCES", "3"))
 NLP_EXTRACT_KEYWORDS = os.environ.get("NLP_EXTRACT_KEYWORDS", "0") == "1"
 NLP_KEYWORDS_TOP_N = int(os.environ.get("NLP_KEYWORDS_TOP_N", "10"))
 NLP_LANGUAGE_DETECT = os.environ.get("NLP_LANGUAGE_DETECT", "0") == "1"
+NLP_KEYWORDS_BACKEND = os.environ.get("NLP_KEYWORDS_BACKEND", "sklearn")  # sklearn|naive
+NLP_KEYWORDS_NGRAM_MAX = int(os.environ.get("NLP_KEYWORDS_NGRAM_MAX", "1"))
+NLP_KEYWORDS_MAX_FEATURES = int(os.environ.get("NLP_KEYWORDS_MAX_FEATURES", "20000"))
 

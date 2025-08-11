@@ -18,6 +18,9 @@ from .config import (
     NLP_EXTRACT_KEYWORDS,
     NLP_KEYWORDS_TOP_N,
     NLP_LANGUAGE_DETECT,
+    NLP_KEYWORDS_BACKEND,
+    NLP_KEYWORDS_NGRAM_MAX,
+    NLP_KEYWORDS_MAX_FEATURES,
 )
 
 
@@ -53,7 +56,7 @@ def _remove_stopwords(tokens: List[str]) -> List[str]:
     return [t for t in tokens if t not in STOPWORDS]
 
 
-def _tfidf_keywords(doc_tokens: List[str], corpus_counts: Counter, corpus_docs: int, top_n: int) -> List[Tuple[str, float]]:
+def _tfidf_keywords_naive(doc_tokens: List[str], corpus_counts: Counter, corpus_docs: int, top_n: int) -> List[Tuple[str, float]]:
     doc_count = Counter(doc_tokens)
     scores: Dict[str, float] = {}
     for term, tf in doc_count.items():
@@ -62,6 +65,36 @@ def _tfidf_keywords(doc_tokens: List[str], corpus_counts: Counter, corpus_docs: 
         scores[term] = float(tf) * idf
     ranked = sorted(scores.items(), key=lambda x: x[1], reverse=True)
     return ranked[:top_n]
+
+
+def _build_sklearn_vectorizer():
+    from sklearn.feature_extraction.text import TfidfVectorizer  # type: ignore
+
+    ngram_range = (1, max(1, int(NLP_KEYWORDS_NGRAM_MAX)))
+    vectorizer = TfidfVectorizer(
+        lowercase=NLP_LOWERCASE,
+        max_features=max(1000, int(NLP_KEYWORDS_MAX_FEATURES)),
+        ngram_range=ngram_range,
+        token_pattern=r"[A-Za-z0-9_]+",
+        stop_words=list(STOPWORDS) if NLP_REMOVE_STOPWORDS else None,
+    )
+    return vectorizer
+
+
+def _tfidf_keywords_sklearn(texts: List[str], top_n: int) -> List[List[Tuple[str, float]]]:
+    if not texts:
+        return []
+    vectorizer = _build_sklearn_vectorizer()
+    tfidf = vectorizer.fit_transform(texts)
+    feature_names = vectorizer.get_feature_names_out()
+    results: List[List[Tuple[str, float]]] = []
+    for i in range(tfidf.shape[0]):
+        row = tfidf.getrow(i)
+        coo = row.tocoo()
+        pairs = [(feature_names[j], float(v)) for j, v in zip(coo.col, coo.data)]
+        topk = sorted(pairs, key=lambda x: x[1], reverse=True)[:top_n]
+        results.append(topk)
+    return results
 
 
 def _lead_n_sentence_summary(text: str, n: int) -> str:
@@ -88,25 +121,39 @@ class NlpArtifacts:
 
 
 def run_nlp_pipeline(all_texts: List[str]) -> List[NlpArtifacts]:
-    # Build naive corpus counts for TF-IDF
-    corpus_counts: Counter = Counter()
-    documents_tokens: List[List[str]] = []
-    for text in all_texts:
-        processed = _preprocess(text)
-        tokens = _tokenize(processed)
-        tokens = _remove_stopwords(tokens)
-        documents_tokens.append(tokens)
-        corpus_counts.update(set(tokens))
+    # Preprocess once
+    preprocessed_texts = [_preprocess(t) for t in all_texts]
+
+    # Summaries and language (fast, streaming)
+    summaries = [
+        _lead_n_sentence_summary(t, NLP_SUMMARY_SENTENCES) if NLP_SUMMARIZE else None
+        for t in all_texts
+    ]
+    languages = [_simple_lang_detect(t) if NLP_LANGUAGE_DETECT else None for t in all_texts]
+
+    # Keywords: choose backend
+    keywords_per_text: List[List[Tuple[str, float]]] = [[] for _ in preprocessed_texts]
+    if NLP_EXTRACT_KEYWORDS and preprocessed_texts:
+        if NLP_KEYWORDS_BACKEND == "sklearn":
+            keywords_per_text = _tfidf_keywords_sklearn(preprocessed_texts, NLP_KEYWORDS_TOP_N)
+        else:
+            corpus_counts: Counter = Counter()
+            documents_tokens: List[List[str]] = []
+            for text in preprocessed_texts:
+                tokens = _remove_stopwords(_tokenize(text))
+                documents_tokens.append(tokens)
+                corpus_counts.update(set(tokens))
+            corpus_docs = len(preprocessed_texts)
+            keywords_per_text = [
+                _tfidf_keywords_naive(documents_tokens[i], corpus_counts, corpus_docs, NLP_KEYWORDS_TOP_N)
+                for i in range(len(preprocessed_texts))
+            ]
 
     artifacts: List[NlpArtifacts] = []
-    corpus_docs = len(all_texts)
-    for idx, text in enumerate(all_texts):
-        language = _simple_lang_detect(text) if NLP_LANGUAGE_DETECT else None
-        summary = _lead_n_sentence_summary(text, NLP_SUMMARY_SENTENCES) if NLP_SUMMARIZE else None
-        keywords: List[Tuple[str, float]] = []
-        if NLP_EXTRACT_KEYWORDS:
-            keywords = _tfidf_keywords(documents_tokens[idx], corpus_counts, corpus_docs, NLP_KEYWORDS_TOP_N)
-        artifacts.append(NlpArtifacts(language=language, summary=summary, keywords=keywords))
+    for i in range(len(all_texts)):
+        artifacts.append(
+            NlpArtifacts(language=languages[i], summary=summaries[i], keywords=keywords_per_text[i])
+        )
     return artifacts
 
 
