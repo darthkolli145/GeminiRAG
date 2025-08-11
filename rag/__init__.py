@@ -9,6 +9,7 @@ __all__ = [
     "rag_pipeline",
     "cli",
     "server",
+    "nlp",
 ]
 
 __version__ = "0.1.0"

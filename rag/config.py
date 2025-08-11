@@ -7,6 +7,8 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DOCS_DIR = PROJECT_ROOT / "docs"
 VECTOR_DB_DIR = PROJECT_ROOT / "vectordb"
 VECTOR_DB_DIR.mkdir(parents=True, exist_ok=True)
+NLP_METADATA_DIR = VECTOR_DB_DIR / "nlp_metadata"
+NLP_METADATA_DIR.mkdir(parents=True, exist_ok=True)
 
 # Vector store paths
 INDEX_PATH = VECTOR_DB_DIR / "index.faiss"
@@ -50,4 +52,14 @@ RERANK_CANDIDATE_MULTIPLIER = int(os.environ.get("RERANK_CANDIDATE_MULTIPLIER", 
 # Ingestion parallelism/progress
 INGEST_MAX_WORKERS = int(os.environ.get("INGEST_MAX_WORKERS", "4"))
 INGEST_SHOW_PROGRESS = os.environ.get("INGEST_SHOW_PROGRESS", "1") == "1"
+
+# NLP pipeline toggles
+NLP_ENABLE = os.environ.get("NLP_ENABLE", "0") == "1"
+NLP_LOWERCASE = os.environ.get("NLP_LOWERCASE", "1") == "1"
+NLP_REMOVE_STOPWORDS = os.environ.get("NLP_REMOVE_STOPWORDS", "1") == "1"
+NLP_SUMMARIZE = os.environ.get("NLP_SUMMARIZE", "0") == "1"
+NLP_SUMMARY_SENTENCES = int(os.environ.get("NLP_SUMMARY_SENTENCES", "3"))
+NLP_EXTRACT_KEYWORDS = os.environ.get("NLP_EXTRACT_KEYWORDS", "0") == "1"
+NLP_KEYWORDS_TOP_N = int(os.environ.get("NLP_KEYWORDS_TOP_N", "10"))
+NLP_LANGUAGE_DETECT = os.environ.get("NLP_LANGUAGE_DETECT", "0") == "1"
 

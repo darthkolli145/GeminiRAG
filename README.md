@@ -12,6 +12,7 @@ This project is a minimal, production-friendly RAG scaffold you can run locally.
 - Simple chunking and metadata tracking for citations
 - CLI and FastAPI server
 - PDF, TXT, and Markdown support
+- Optional NLP preprocessing: lowercasing, stopword removal, simple summaries, keyword extraction, and per-document metadata
 
 ### Quickstart
 
@@ -39,6 +40,15 @@ $env:LOCAL_LLM_MODEL_ID = "HuggingFaceTB/SmolLM2-360M-Instruct"
 3) Add documents to `docs/` and ingest them
 
 ```powershell
+./.venv/Scripts/python.exe -m rag.ingest --path docs
+```
+
+Enable optional NLP pipeline during ingest:
+
+```powershell
+$env:NLP_ENABLE = "1"
+$env:NLP_SUMMARIZE = "1"        # lead-3 sentence heuristic
+$env:NLP_EXTRACT_KEYWORDS = "1"  # naive TF-IDF
 ./.venv/Scripts/python.exe -m rag.ingest --path docs
 ```
 

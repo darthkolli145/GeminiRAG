@@ -18,6 +18,8 @@ from .config import (
 from .embeddings import EmbeddingModel
 from .utils import chunk_text, load_text_from_file
 from .vectordb import VectorMetadata, VectorStore
+from .config import NLP_ENABLE
+from .nlp import run_nlp_pipeline, save_nlp_metadata
 
 
 def compute_document_id(file_path: Path, content: str) -> str:
@@ -103,6 +105,13 @@ def ingest_path(path: Path) -> int:
     for file_path_str, document_id, chunks in results:
         if not chunks:
             continue
+        # Optional NLP preprocessing/artifacts
+        if NLP_ENABLE:
+            try:
+                artifacts = run_nlp_pipeline(chunks)
+                save_nlp_metadata(document_id, artifacts)
+            except Exception as e:
+                print(f"NLP pipeline failed for {file_path_str}: {e}")
         vectors = embedder.embed_texts(chunks)
         metadatas = [
             VectorMetadata(
