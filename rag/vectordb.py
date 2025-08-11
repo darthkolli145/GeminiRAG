@@ -36,6 +36,7 @@ class VectorStore:
         self.nn = NearestNeighbors(n_neighbors=10, metric="cosine") if not HAS_FAISS else None
         self.metadatas: List[VectorMetadata] = []
         self._vectors: np.ndarray | None = None  # used when FAISS is unavailable
+        self._is_fitted: bool = False
 
     @property
     def size(self) -> int:
@@ -59,10 +60,20 @@ class VectorStore:
                 self._vectors = vectors
             else:
                 self._vectors = np.vstack([self._vectors, vectors])
-            # Refit knn
-            self.nn.set_params(n_neighbors=min(10, len(self.metadatas) + len(metadatas)))
-            self.nn.fit(self._vectors)
+            # Delay fitting until finalize or search to avoid repeated refits
+            self._is_fitted = False
         self.metadatas.extend(metadatas)
+
+    def finalize(self) -> None:
+        if HAS_FAISS:
+            return
+        if self._vectors is None or len(self.metadatas) == 0:
+            self._is_fitted = True
+            return
+        n_neighbors = min(10, len(self.metadatas))
+        self.nn.set_params(n_neighbors=n_neighbors)
+        self.nn.fit(self._vectors)
+        self._is_fitted = True
 
     def search(self, vector: np.ndarray, top_k: int = 4) -> List[Tuple[float, VectorMetadata]]:
         if vector.ndim == 1:
@@ -81,6 +92,9 @@ class VectorStore:
         else:
             if self._vectors is None or len(self.metadatas) == 0:
                 return []
+            if not self._is_fitted:
+                # Lazy fit on first search after additions
+                self.finalize()
             n = min(top_k, len(self.metadatas))
             self.nn.set_params(n_neighbors=n)
             distances, indices = self.nn.kneighbors(vector, n_neighbors=n)
@@ -95,6 +109,8 @@ class VectorStore:
             assert self.index is not None
             faiss.write_index(self.index, str(index_path))
         else:
+            # Ensure fitted and vectors are persisted for sklearn backend
+            self.finalize()
             if self._vectors is None:
                 self._vectors = np.zeros((0, self.dim), dtype=np.float32)
             np.save(str(VECTORS_PATH), self._vectors)
@@ -144,5 +160,6 @@ class VectorStore:
                 n_neighbors = min(10, store._vectors.shape[0])
                 store.nn.set_params(n_neighbors=n_neighbors)
                 store.nn.fit(store._vectors)
+                store._is_fitted = True
         return store
 

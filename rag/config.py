@@ -17,6 +17,7 @@ VECTORS_PATH = VECTOR_DB_DIR / "vectors.npy"  # used when FAISS is unavailable
 DEFAULT_EMBEDDING_MODEL = os.environ.get(
     "EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2"
 )
+EMBEDDING_BATCH_SIZE = int(os.environ.get("EMBEDDING_BATCH_SIZE", "32"))
 
 # Chunking
 CHUNK_SIZE_CHARS = int(os.environ.get("CHUNK_SIZE_CHARS", "800"))

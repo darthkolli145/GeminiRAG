@@ -50,7 +50,7 @@ class LLM:
     def _call_openai(self, prompt: str) -> str:
         assert self._openai_client is not None
         resp = self._openai_client.chat.completions.create(
-            model=self.model,
+            model=OPENAI_MODEL,
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": prompt},

@@ -5,7 +5,7 @@ from typing import Iterable, List
 import numpy as np
 from sentence_transformers import SentenceTransformer
 
-from .config import DEFAULT_EMBEDDING_MODEL
+from .config import DEFAULT_EMBEDDING_MODEL, EMBEDDING_BATCH_SIZE
 
 
 class EmbeddingModel:
@@ -19,6 +19,7 @@ class EmbeddingModel:
             convert_to_numpy=True,
             normalize_embeddings=True,
             show_progress_bar=False,
+            batch_size=EMBEDDING_BATCH_SIZE,
         )
         return embeddings.astype("float32")
 

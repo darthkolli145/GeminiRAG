@@ -9,7 +9,15 @@ from .vectordb import VectorMetadata, VectorStore
 
 class Retriever:
     def __init__(self) -> None:
-        self.embedder = EmbeddingModel()
+        # Cache a single embedder across instances to avoid reloading the model
+        global _EMBEDDER_SINGLETON
+        try:
+            _EMBEDDER_SINGLETON
+        except NameError:
+            _EMBEDDER_SINGLETON = None  # type: ignore
+        if _EMBEDDER_SINGLETON is None:
+            _EMBEDDER_SINGLETON = EmbeddingModel()  # type: ignore
+        self.embedder = _EMBEDDER_SINGLETON  # type: ignore
         self.store = VectorStore.load(INDEX_PATH, METADATA_PATH)
 
     def retrieve(self, query: str, top_k: int = DEFAULT_TOP_K) -> List[Tuple[float, VectorMetadata]]:

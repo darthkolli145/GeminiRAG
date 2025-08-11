@@ -74,6 +74,12 @@ def ingest_path(path: Path) -> int:
         total_new_chunks += len(chunks)
         print(f"Ingested {len(chunks)} chunks from {file_path}")
 
+    # Perform a single fit/save at the end to avoid repeated refits
+    try:
+        store.finalize()
+    except AttributeError:
+        # Backward compatibility if finalize doesn't exist
+        pass
     store.save(INDEX_PATH, METADATA_PATH)
     print(f"Saved vector store: {store.size} total vectors")
     return total_new_chunks
