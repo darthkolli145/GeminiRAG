@@ -7,7 +7,7 @@ from typing import List, Dict, Tuple
 import json
 import math
 import re
-from collections import Counter, defaultdict
+from collections import Counter
 
 from .config import (
     NLP_METADATA_DIR,

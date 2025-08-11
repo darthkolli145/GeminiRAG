@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-import os
 from textwrap import dedent
-from typing import List
 
 from .config import (
     LLM_BACKEND,
@@ -70,7 +68,6 @@ class LLM:
 
     def _call_transformers(self, prompt: str) -> str:
         assert self._hf_model is not None and self._hf_tokenizer is not None
-        from transformers import TextIteratorStreamer
         import torch
 
         messages = [
