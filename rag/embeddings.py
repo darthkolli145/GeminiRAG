@@ -11,7 +11,19 @@ from .config import DEFAULT_EMBEDDING_MODEL, EMBEDDING_BATCH_SIZE, EMBEDDING_SHO
 class EmbeddingModel:
     def __init__(self, model_name: str | None = None) -> None:
         self.model_name = model_name or DEFAULT_EMBEDDING_MODEL
-        self.model = SentenceTransformer(self.model_name)
+        try:
+            import torch  # type: ignore
+
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+            if device == "cuda":
+                try:
+                    torch.set_float32_matmul_precision("high")
+                except Exception:
+                    pass
+            self.model = SentenceTransformer(self.model_name, device=device)
+        except Exception:
+            # Fallback to default device
+            self.model = SentenceTransformer(self.model_name)
 
     def embed_texts(self, texts: List[str]) -> np.ndarray:
         embeddings = self.model.encode(

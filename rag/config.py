@@ -36,6 +36,10 @@ LOCAL_LLM_MODEL_ID = os.environ.get(
 )
 LOCAL_MAX_NEW_TOKENS = int(os.environ.get("LOCAL_MAX_NEW_TOKENS", "256"))
 LOCAL_TEMPERATURE = float(os.environ.get("LOCAL_TEMPERATURE", "0.2"))
+LLM_DEVICE_MAP = os.environ.get("LLM_DEVICE_MAP", "auto")
+LLM_LOAD_IN_4BIT = os.environ.get("LLM_LOAD_IN_4BIT", "0") == "1"
+LLM_LOAD_IN_8BIT = os.environ.get("LLM_LOAD_IN_8BIT", "0") == "1"
+LLM_TORCH_DTYPE = os.environ.get("LLM_TORCH_DTYPE", "auto")  # auto|float16|bfloat16
 
 # OpenAI (optional)
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
