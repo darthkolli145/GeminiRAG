@@ -77,3 +77,6 @@ NLP_KEYWORDS_BACKEND = os.environ.get("NLP_KEYWORDS_BACKEND", "sklearn")  # skle
 NLP_KEYWORDS_NGRAM_MAX = int(os.environ.get("NLP_KEYWORDS_NGRAM_MAX", "1"))
 NLP_KEYWORDS_MAX_FEATURES = int(os.environ.get("NLP_KEYWORDS_MAX_FEATURES", "20000"))
 
+# FAISS GPU
+FAISS_USE_GPU = os.environ.get("FAISS_USE_GPU", "0") == "1"
+
