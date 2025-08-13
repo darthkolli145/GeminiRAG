@@ -1,18 +1,21 @@
 ## Retrieval-Augmented Generation (RAG) – Minimal Starter
 
-This project is a minimal, production-friendly RAG scaffold you can run locally. It ingests your documents, builds a FAISS/Sklearn vector index using `sentence-transformers` embeddings, retrieves relevant chunks for a query, and answers via:
+This project is a minimal, production-friendly RAG scaffold you can run locally. It ingests your documents, builds a FAISS/Sklearn (or Torch GPU fallback) vector index using `sentence-transformers` embeddings, retrieves relevant chunks for a query, and answers via:
 
 - Local Hugging Face transformers model (default, no API key required)
 - OpenAI Chat API (optional, if `OPENAI_API_KEY` is set)
+- Google Gemini (optional, if `GEMINI_API_KEY` is set) – for LLM and/or embeddings
 - Extractive fallback
 
 ### Features
 - Local embeddings with `all-MiniLM-L6-v2` (small, fast)
-- FAISS vector store persisted to disk
+- Gemini embeddings (optional)
+- FAISS vector store persisted to disk (with GPU support if available)
 - Simple chunking and metadata tracking for citations
 - CLI and FastAPI server
 - PDF, TXT, and Markdown support
 - Optional NLP preprocessing: lowercasing, stopword removal, simple summaries, keyword extraction, and per-document metadata
+ - GPU acceleration for local LLM and retrieval (FAISS GPU or Torch GPU fallback)
 
 ### Quickstart
 
@@ -35,7 +38,26 @@ $env:LOCAL_LLM_MODEL_ID = "HuggingFaceTB/SmolLM2-360M-Instruct"
 # $env:LLM_BACKEND = "openai"
 # $env:OPENAI_API_KEY = "sk-..."
 # $env:OPENAI_MODEL = "gpt-4o-mini"
+
+# Or use Google Gemini:
+# $env:LLM_BACKEND = "gemini"
+# $env:GEMINI_API_KEY = "AIza..."
+# # Optional model override
+# # $env:GEMINI_MODEL = "gemini-1.5-flash"
 ```
+
+2.5) (Optional) Configure embeddings backend
+
+```powershell
+# Default local embeddings (CUDA if available):
+$env:EMBEDDING_BACKEND = "sentence-transformers"
+# Optional: Gemini embeddings (paid API)
+# $env:EMBEDDING_BACKEND = "gemini"
+# # Optional model override:
+# # $env:GEMINI_EMBED_MODEL = "text-embedding-004"
+```
+
+Note: If you change `EMBEDDING_BACKEND` you must re-ingest to rebuild vectors.
 
 3) Add documents to `docs/` and ingest them
 
@@ -72,6 +94,41 @@ Then query:
 Invoke-RestMethod -Uri "http://127.0.0.1:8000/query" -Method Post -Body (@{question='Explain the project'} | ConvertTo-Json) -ContentType 'application/json'
 ```
 
+### GPU acceleration (optional)
+
+Local GPU for LLM and retrieval:
+
+```powershell
+# LLM on GPU (works with local transformers backend)
+$env:LLM_BACKEND = "transformers"
+$env:LLM_DEVICE_MAP = "auto"
+$env:LLM_LOAD_IN_4BIT = "1"          # optional quantization
+$env:LLM_TORCH_DTYPE = "bfloat16"    # or "float16"
+
+# Retrieval on GPU
+$env:FAISS_USE_GPU = "1"             # uses FAISS GPU if available; otherwise Torch GPU fallback
+```
+
+If you switch between local and Gemini embeddings, re-run ingest. You can clear the store with:
+
+```powershell
+Remove-Item -Recurse -Force .\vectordb\* 2>$null
+```
+
+### RAG quality tips
+
+- Increase candidate breadth for better recall before reranking:
+
+```powershell
+$env:RERANK_CANDIDATE_MULTIPLIER = "10"
+```
+
+- Provenance only (no generative model):
+
+```powershell
+$env:LLM_BACKEND = "extractive"
+```
+
 ### Project Structure
 
 ```
@@ -94,8 +151,9 @@ vectordb/
 ```
 
 ### Notes
-- If you do not set `OPENAI_API_KEY`, the system returns an extractive answer from the most relevant chunks.
+- If you do not set any API keys, the system defaults to local transformers or extractive answers.
 - Supported file types for ingestion: `.txt`, `.md`, `.pdf`.
 - You can safely clear the vector store by deleting the `vectordb/` directory.
+
 
 
