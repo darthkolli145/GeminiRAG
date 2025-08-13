@@ -14,6 +14,8 @@ from .config import (
     LLM_LOAD_IN_4BIT,
     LLM_LOAD_IN_8BIT,
     LLM_TORCH_DTYPE,
+    GEMINI_API_KEY,
+    GEMINI_MODEL,
 )
 
 
@@ -34,6 +36,7 @@ class LLM:
         self._openai_client = None
         self._hf_model = None
         self._hf_tokenizer = None
+        self._gemini_model = None
         if self.backend == "openai" and OPENAI_API_KEY:
             from openai import OpenAI
 
@@ -71,6 +74,18 @@ class LLM:
                     torch.set_float32_matmul_precision("high")
                 except Exception:
                     pass
+        elif self.backend == "gemini" and GEMINI_API_KEY:
+            try:
+                import google.generativeai as genai  # type: ignore
+
+                genai.configure(api_key=GEMINI_API_KEY)
+                # Prefer setting system prompt at model level
+                self._gemini_model = genai.GenerativeModel(
+                    model_name=GEMINI_MODEL,
+                    system_instruction=SYSTEM_PROMPT,
+                )
+            except Exception:
+                self._gemini_model = None
 
     def _call_openai(self, prompt: str) -> str:
         assert self._openai_client is not None
@@ -128,6 +143,25 @@ class LLM:
             generated = full_text[len(text):].strip() or full_text.strip()
         return generated
 
+    def _call_gemini(self, prompt: str) -> str:
+        assert self._gemini_model is not None
+        resp = self._gemini_model.generate_content(prompt)
+        try:
+            text = getattr(resp, "text", None)
+            if text:
+                return text
+        except Exception:
+            pass
+        try:
+            candidates = getattr(resp, "candidates", [])
+            if candidates:
+                parts = getattr(candidates[0].content, "parts", [])
+                texts = [getattr(p, "text", "") for p in parts]
+                return "".join(texts).strip()
+        except Exception:
+            pass
+        return ""
+
     def answer(self, prompt: str) -> str:
         try:
             if self.backend == "transformers":
@@ -137,6 +171,11 @@ class LLM:
                 return out
             if self.backend == "openai" and OPENAI_API_KEY:
                 return self._call_openai(prompt)
+            if self.backend == "gemini" and GEMINI_API_KEY and self._gemini_model is not None:
+                out = self._call_gemini(prompt)
+                if not out.strip():
+                    return self._call_extractive(prompt)
+                return out
             return self._call_extractive(prompt)
         except Exception:
             return self._call_extractive(prompt)

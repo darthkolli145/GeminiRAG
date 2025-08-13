@@ -16,6 +16,8 @@ METADATA_PATH = VECTOR_DB_DIR / "metadata.json"
 VECTORS_PATH = VECTOR_DB_DIR / "vectors.npy"  # used when FAISS is unavailable
 
 # Embeddings
+# Backend: 'sentence-transformers' | 'gemini'
+EMBEDDING_BACKEND = os.environ.get("EMBEDDING_BACKEND", "sentence-transformers")
 DEFAULT_EMBEDDING_MODEL = os.environ.get(
     "EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2"
 )
@@ -27,7 +29,7 @@ CHUNK_SIZE_CHARS = int(os.environ.get("CHUNK_SIZE_CHARS", "800"))
 CHUNK_OVERLAP_CHARS = int(os.environ.get("CHUNK_OVERLAP_CHARS", "120"))
 
 # LLM
-LLM_BACKEND = os.environ.get("LLM_BACKEND", "transformers")  # transformers|openai|extractive
+LLM_BACKEND = os.environ.get("LLM_BACKEND", "transformers")  # transformers|openai|gemini|extractive
 
 # Local transformers model (no API)
 LOCAL_LLM_MODEL_ID = os.environ.get(
@@ -45,6 +47,11 @@ LLM_TORCH_DTYPE = os.environ.get("LLM_TORCH_DTYPE", "auto")  # auto|float16|bflo
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
 OPENAI_BASE_URL = os.environ.get("OPENAI_BASE_URL")  # Optional for Azure/Proxies
+
+# Gemini (optional)
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-1.5-flash")
+GEMINI_EMBED_MODEL = os.environ.get("GEMINI_EMBED_MODEL", "text-embedding-004")
 
 # Retrieval
 DEFAULT_TOP_K = int(os.environ.get("TOP_K", "4"))
